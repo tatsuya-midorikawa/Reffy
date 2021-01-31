@@ -6,7 +6,7 @@ namespace Reffy
 {
     public static class Extensions
     {
-        public static FieldInfo GetBackingField<T>(string propertyName)
+        public static FieldInfo GetBackingField<T>(this string propertyName)
         {
             if (_backingfieldCache.TryGetValue(typeof(T), out Dictionary<string, FieldInfo> innerCache))
             {
@@ -23,7 +23,7 @@ namespace Reffy
             return innerCache[propertyName];
         }
 
-        public static FieldInfo GetField<T>(string propertyName)
+        public static FieldInfo GetField<T>(this string propertyName)
             => typeof(T).GetField(propertyName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
         public static T GetAttribute<T>(this MemberInfo info)
