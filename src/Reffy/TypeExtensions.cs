@@ -9,10 +9,10 @@ namespace Reffy
     public static class TypeExtensions
     {
         /// <summary>
-        /// 
+        /// Type情報からデフォルトのインスタンスを生成する
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
+        /// <param name="type">デフォルトインスタンスを生成したいType情報</param>
+        /// <returns>Type情報から生成したインスタンス</returns>
         public static object CreateDefaultInstance(this Type type)
         {
             // 判別共用体(F#)
