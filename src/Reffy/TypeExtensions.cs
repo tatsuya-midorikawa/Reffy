@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.FSharp.Core;
@@ -9,7 +10,40 @@ namespace Reffy
     public static class TypeExtensions
     {
         /// <summary>
-        /// Type情報からデフォルトのインスタンスを生成する
+        /// Type情報からBacking field一覧を取得する.
+        /// </summary>
+        /// <param name="type">Backing fieldsを取得したいType情報</param>
+        /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
+        /// <returns>Backing fields情報配列</returns>
+        public static FieldInfo[] GetBackingFields(this Type type, bool useCache = true)
+        {
+            if (useCache && _backingfieldsCache.TryGetValue(type.FullName, out FieldInfo[] fields))
+                return fields;
+
+            if (FSharpType.IsUnion(type, FSharpOption<BindingFlags>.None))
+            {
+                fields = type
+                    .GetFields((BindingFlags.Instance | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly);
+            }
+            else
+            {
+                fields = type
+                    .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Where(field => field.Name.EndsWith(">k__BackingField"))
+                    .ToArray();
+            }
+
+            if (useCache)
+                _backingfieldsCache.Add(type.FullName, fields);
+
+            return fields;
+        }
+
+        private static Dictionary<string, FieldInfo[]> _backingfieldsCache
+            = new Dictionary<string, FieldInfo[]>();
+
+        /// <summary>
+        /// Type情報からデフォルトのインスタンスを生成する.
         /// </summary>
         /// <param name="type">デフォルトインスタンスを生成したいType情報</param>
         /// <returns>Type情報から生成したインスタンス</returns>
