@@ -27,7 +27,7 @@ namespace Reffy
                 innerCache = _backingfieldCache[typeof(T)];
             }
 
-            var backingfiledName = propertyName.ToBackingFieldName(FSharpType.IsUnion(typeof(T), FSharpOption<BindingFlags>.None));
+            var backingfiledName = propertyName.ToBackingFieldName<T>();
             innerCache.Add(propertyName, typeof(T).GetField(backingfiledName, BindingFlags.Instance | BindingFlags.NonPublic));
             return innerCache[propertyName];
         }
@@ -50,13 +50,13 @@ namespace Reffy
         /// <param name="propertyName">対象のプロパティ名</param>
         /// <param name="isUnion">判別共用体(F#)の場合、trueを指定</param>
         /// <returns>Backing field名</returns>
-        internal static string ToBackingFieldName(this string propertyName, bool isUnion = false)
+        internal static string ToBackingFieldName<T>(this string propertyName)
         {
             // 判別共用体(F#)の場合、プロパティ名によってBacking field名が変化するので特殊対応する
             //      PascalCase -> camelCase
             //      camelCase -> _camelCase
             //      日本語 -> _日本語
-            if (isUnion)
+            if (FSharpType.IsUnion(typeof(T), FSharpOption<BindingFlags>.None))
             {
                 var c = propertyName[0];
                 if ('A' <= c && c <= 'Z')
@@ -66,11 +66,15 @@ namespace Reffy
 
                 return "_" + propertyName;
             }
-            // 判別共用体(F#)以外の場合は、定型のBacking field名を生成する
-            else
+
+            // レコード型(F#)の場合、Backing field名がC#の定型のものと違うため特殊対応する
+            if(FSharpType.IsRecord(typeof(T), FSharpOption<BindingFlags>.None))
             {
-                return $"<{propertyName}>k__BackingField";
+                return $"{propertyName}@";
             }
+
+            // 判別共用体(F#) / レコード型(F#)以外の場合は、定型のBacking field名を生成する
+            return $"<{propertyName}>k__BackingField";
         }
     }
 }
