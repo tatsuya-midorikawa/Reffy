@@ -26,23 +26,8 @@ namespace Reffy
         public static bool TryGetAttribute<T>(this MemberInfo info, out T attribute)
             where T : Attribute
         {
-            if (_memberinfoCache.TryGetValue(info, out Attribute cache) && cache is T)
-            {
-                attribute = (T)cache;
-                return true;
-            }
-
-            if ((Attribute.GetCustomAttribute(info, typeof(T)) is T attr))
-            {
-                _memberinfoCache.Add(info, attr);
-                attribute = attr;
-                return true;
-            }
-            else
-            {
-                attribute = default;
-                return false;
-            }
+            attribute = info.GetAttribute<T>();
+            return attribute != null;
         }
 
         private static Dictionary<MemberInfo, Attribute> _memberinfoCache
