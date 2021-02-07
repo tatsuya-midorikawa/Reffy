@@ -47,12 +47,28 @@ namespace Reffy
         /// </summary>
         /// <param name="type">デフォルトインスタンスを生成したいType情報</param>
         /// <returns>Type情報から生成したインスタンス</returns>
-        public static object CreateDefaultInstance(this Type type)
+        public static object MakeDefault(this Type type)
         {
-            // 判別共用体(F#)
-            if (FSharpType.IsUnion(type, FSharpOption<BindingFlags>.None))
+            var none = FSharpOption<BindingFlags>.None;
+
+            // Option型(F#)
+            //   - FSharpType.IsUnion()でも引っ掛かってしまうので、
+            //     それよりも前に判定をする必要がある.
+            if (type.IsGenericType
+                && !type.IsGenericTypeDefinition
+                && !type.IsGenericParameter
+                && typeof(FSharpOption<>) == type.GetGenericTypeDefinition())
             {
-                var ctor = FSharpType.GetUnionCases(type, FSharpOption<BindingFlags>.None).FirstOrDefault();
+                return type
+                    .GetProperty("None", BindingFlags.Public | BindingFlags.Static)
+                    .GetGetMethod()
+                    .Invoke(null, null);
+            }
+
+            // 判別共用体(F#)
+            if (FSharpType.IsUnion(type, none))
+            {
+                var ctor = FSharpType.GetUnionCases(type, none).FirstOrDefault();
                 if (ctor == null)
                     throw new Exception("Invalid type.");
                 var ps = ctor.GetFields();
@@ -64,7 +80,7 @@ namespace Reffy
                         : null;
                 }
 
-                return FSharpValue.MakeUnion(ctor, qs, FSharpOption<BindingFlags>.None);
+                return FSharpValue.MakeUnion(ctor, qs, none);
             }
 
             // 列挙型
