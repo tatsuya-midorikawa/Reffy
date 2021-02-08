@@ -23,49 +23,61 @@
     </None>
   </ItemGroup>
 
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-    <PackageReference Include="FSharp.Core">
-      <Version>4.1.18</Version>
-    </PackageReference>
+    <PackageReference Include="jnm2.ReferenceAssemblies.net35" Version="1.0.1" PrivateAssets="All" />
+    <PackageReference Include="Mono.Reflection" Version="1.1.0" />
+    <PackageReference Include="FSharp.Core" Version="4.1.18" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>4.1.18</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>4.7.2</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>4.7.2</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>5.0.0</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>5.0.0</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>5.0.0</Version>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Mono.Reflection" Version="2.0.0" />
     <PackageReference Include="FSharp.Core">
       <Version>5.0.0</Version>
     </PackageReference>
