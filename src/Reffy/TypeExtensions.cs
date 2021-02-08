@@ -4,11 +4,34 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.FSharp.Core;
 using Microsoft.FSharp.Reflection;
+using Mono.Reflection;
 
 namespace Reffy
 {
     public static class TypeExtensions
     {
+        /// <summary>
+        /// プロパティ情報からBacking fieldを取得する.
+        /// </summary>
+        /// <param name="property">Backing fieldsを取得したいプロパティ情報</param>
+        /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
+        /// <returns>Backing fields情報</returns>
+        public static FieldInfo GetBackingField(this PropertyInfo property, bool useCache = true)
+        {
+            if (property == null)
+                throw new ArgumentNullException("The argument must be a non-null value.");
+
+            if (useCache && _backingfieldCache.TryGetValue(property, out FieldInfo field))
+                return field;
+
+            field = BackingFieldResolver.GetBackingField(property);
+            if (useCache)
+                _backingfieldCache.Add(property, field);
+            return field;
+        }
+        private static readonly Dictionary<PropertyInfo, FieldInfo> _backingfieldCache
+            = new Dictionary<PropertyInfo, FieldInfo>();
+
         /// <summary>
         /// Type情報からBacking field一覧を取得する.
         /// </summary>
@@ -20,25 +43,16 @@ namespace Reffy
             if (useCache && _backingfieldsCache.TryGetValue(type.FullName, out FieldInfo[] fields))
                 return fields;
 
-            if (FSharpType.IsUnion(type, FSharpOption<BindingFlags>.None))
-            {
-                fields = type
-                    .GetFields((BindingFlags.Instance | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly);
-            }
-            else
-            {
-                fields = type
-                    .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Where(field => field.Name.EndsWith(">k__BackingField"))
-                    .ToArray();
-            }
+            fields = type
+                .GetProperties((BindingFlags.Instance | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly)
+                .Select(property => property.GetBackingField())
+                .ToArray();
 
             if (useCache)
                 _backingfieldsCache.Add(type.FullName, fields);
 
             return fields;
         }
-
         private static Dictionary<string, FieldInfo[]> _backingfieldsCache
             = new Dictionary<string, FieldInfo[]>();
 
@@ -50,6 +64,12 @@ namespace Reffy
         public static object MakeDefault(this Type type)
         {
             var none = FSharpOption<BindingFlags>.None;
+
+            // 文字列型
+            if (type == typeof(string))
+            {
+                return null;
+            }
 
             // Option型(F#)
             //   - FSharpType.IsUnion()でも引っ掛かってしまうので、
@@ -70,43 +90,46 @@ namespace Reffy
             {
                 var ctor = FSharpType.GetUnionCases(type, none).FirstOrDefault();
                 if (ctor == null)
-                    throw new Exception("Invalid type.");
+                    throw new Exception("Invalid discriminated-unions.");
                 var ps = ctor.GetFields();
                 var qs = new object[ps.Length];
                 for (var i = 0; i < ps.Length; i++)
-                {
-                    qs[i] = ps[i].PropertyType.IsValueType
-                        ? Activator.CreateInstance(ps[i].PropertyType)
-                        : null;
-                }
+                    qs[i] = ps[i].PropertyType.MakeDefault();
 
                 return FSharpValue.MakeUnion(ctor, qs, none);
             }
 
             // 列挙型
             if (type.IsEnum)
-                return Enum.GetValues(type).GetValue(0);
+            {
+                return type.GetEnumValue(0);
+            }
 
             // 構造体
             if (type.IsValueType)
+            {
                 return Activator.CreateInstance(type);
+            }
 
             // クラス
             if (type.IsClass)
             {
                 var ctor = type.GetConstructors().FirstOrDefault();
-                if (ctor is null)
-                    throw new Exception("Public constructor does not exist.");
 
-                var ps = ctor.GetParameters();
-                var qs = new object[ps.Length];
-                for (int i = 0; i < ps.Length; i++)
+                // publicコンストラクタが存在しない場合、nullを返す
+                if (ctor is null)
                 {
-                    qs[i] = ps[i].ParameterType.IsValueType
-                        ? Activator.CreateInstance(ps[i].ParameterType)
-                        : null;
+                    return null;
                 }
-                return Activator.CreateInstance(type, qs);
+                else
+                {
+                    var ps = ctor.GetParameters();
+                    var qs = new object[ps.Length];
+                    for (int i = 0; i < ps.Length; i++)
+                        qs[i] = ps[i].ParameterType.MakeDefault();
+
+                    return Activator.CreateInstance(type, qs);
+                }
             }
 
             throw new ArgumentException("'type' is not supported.");
