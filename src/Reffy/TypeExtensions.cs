@@ -11,26 +11,19 @@ namespace Reffy
     public static class TypeExtensions
     {
         /// <summary>
-        /// プロパティ情報からBacking fieldを取得する.
+        /// 
         /// </summary>
-        /// <param name="property">Backing fieldsを取得したいプロパティ情報</param>
-        /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
-        /// <returns>Backing fields情報</returns>
-        public static FieldInfo GetBackingField(this PropertyInfo property, bool useCache = true)
+        /// <param name="type"></param>
+        /// <param name="propertyName"></param>
+        /// <param name="flags"></param>
+        /// <param name="useCache"></param>
+        /// <returns></returns>
+        public static FieldInfo GetBackingField(this Type type, string propertyName, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
         {
-            if (property == null)
-                throw new ArgumentNullException("The argument must be a non-null value.");
-
-            if (useCache && _backingfieldCache.TryGetValue(property, out FieldInfo field))
-                return field;
-
-            field = BackingFieldResolver.GetBackingField(property);
-            if (useCache)
-                _backingfieldCache.Add(property, field);
-            return field;
+            return type
+                .GetProperty(propertyName, flags)
+                .GetBackingField(useCache);
         }
-        private static readonly Dictionary<PropertyInfo, FieldInfo> _backingfieldCache
-            = new Dictionary<PropertyInfo, FieldInfo>();
 
         /// <summary>
         /// Type情報からBacking field一覧を取得する.
@@ -38,13 +31,13 @@ namespace Reffy
         /// <param name="type">Backing fieldsを取得したいType情報</param>
         /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
         /// <returns>Backing fields情報配列</returns>
-        public static FieldInfo[] GetBackingFields(this Type type, bool useCache = true)
+        public static FieldInfo[] GetBackingFields(this Type type, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
         {
             if (useCache && _backingfieldsCache.TryGetValue(type.FullName, out FieldInfo[] fields))
                 return fields;
 
             fields = type
-                .GetProperties((BindingFlags.Instance | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly)
+                .GetProperties(flags)
                 .Select(property => property.GetBackingField())
                 .ToArray();
 
