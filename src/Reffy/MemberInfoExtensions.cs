@@ -38,18 +38,9 @@ namespace Reffy
         public static T GetAttribute<T>(this MemberInfo info)
             where T : Attribute
         {
-            if (_memberinfoCache.TryGetValue(info, out Attribute cache) && cache is T)
-                return (T)cache;
-
-            if ((Attribute.GetCustomAttribute(info, typeof(T)) is T attribute))
-            {
-                _memberinfoCache.Add(info, attribute);
-                return attribute;
-            }
-            else
-            {
-                return null;
-            }
+            return Attribute.GetCustomAttribute(info, typeof(T)) is T attribute
+                ? attribute
+                : null;
         }
 
         /// <summary>
@@ -65,8 +56,5 @@ namespace Reffy
             attribute = info.GetAttribute<T>();
             return attribute != null;
         }
-
-        private static Dictionary<MemberInfo, Attribute> _memberinfoCache
-            = new Dictionary<MemberInfo, Attribute>();
     }
 }
