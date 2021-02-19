@@ -51,24 +51,84 @@ namespace Reffy.Expressions
                 types[i] = @params[i].GetType();
 
             var key = string.Concat(types as object[]);
-            if (_constructorCache.TryGetValue(type, out ConcurrentDictionary<string, Func<object[], object>> innerCache))
+            if (_constructorCache2.TryGetValue(type, types, out Func<object[], object> ctor))
+                return ctor(@params);
+
+            ctor = BuildConstructor(type, types, @params);
+            return _constructorCache2.GetOrAdd(type, types, ctor)(@params);
+        }
+        private static readonly Cache _constructorCache2 = new Cache();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private class Cache
+        {
+            private ConcurrentDictionary<Type, List<Data>> _cache
+                = new ConcurrentDictionary<Type, List<Data>>();
+
+            public bool TryGetValue(Type type, Type[] types, out Func<object[], object> contructor)
             {
-                // inner cacheの中にコンストラクタのキャッシュ情報があればそれを利用する
-                if (innerCache.TryGetValue(key, out Func<object[], object> ctorCache))
-                    return ctorCache(@params);
-            }
-            else
-            {
-                // _constructorCacheの中にinner cacheが存在しないときのみ、inner cacheを追加する
-                innerCache = new ConcurrentDictionary<string, Func<object[], object>>();
-                _constructorCache.TryAdd(type, innerCache);
+                contructor = null;
+                if (_cache.TryGetValue(type, out List<Data> cache))
+                {
+                    foreach (var ts in cache)
+                    {
+                        if (ts.ArgTypes.Length != types.Length)
+                            continue;
+
+                        var same = true;
+                        for (int i = 0; i < ts.ArgTypes.Length; i++)
+                        {
+                            if (ts.ArgTypes[i] != types[i])
+                            {
+                                same = false;
+                                break;
+                            }
+                        }
+
+                        if (!same)
+                            continue;
+
+                        contructor = ts.Constructor;
+                        return same;
+                    }
+                }
+                return false;
             }
 
-            var ctor = BuildConstructor(type, types, @params);
-            return innerCache.GetOrAdd(key, ctor)(@params);
+            public Func<object[], object> GetOrAdd(Type type, Type[] types, Func<object[], object> contructor)
+            {
+                if (!_cache.TryGetValue(type, out List<Data> cache))
+                {
+                    cache = new List<Data>();
+                    _cache.TryAdd(type, cache);
+                }
+
+                if (TryGetValue(type, types, out Func<object[], object>  ctor))
+                {
+                    return ctor;
+                }
+
+                cache.Add(new Data(types, contructor));
+                return contructor;
+            }
+
+            public class Data
+            {
+                public Type[] ArgTypes { get; }
+                public Func<object[], object> Constructor { get; }
+
+                public Data(Type[] argTypes, Func<object[], object> constructor)
+                {
+                    ArgTypes = argTypes;
+                    Constructor = constructor;
+                }
+            }
         }
-        private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, Func<object[], object>>> _constructorCache
-            = new ConcurrentDictionary<Type, ConcurrentDictionary<string, Func<object[], object>>>();
+
+
+
 
         /// <summary>
         /// 限定的なコンストラクタ呼び出し.
