@@ -101,29 +101,6 @@ namespace Reffy.Expressions
         }
         private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, Func<object[], object>>> _restrictedConstructorCache
             = new ConcurrentDictionary<Type, ConcurrentDictionary<int, Func<object[], object>>>();
-
-
-        //public static object RestrictedConstructor2(this Type type, params object[] @params)
-        //{
-        //    var key = @params?.Length ?? 0;
-        //    if (_restrictedConstructorCache2.TryGetValue(type, out ConcurrentDictionary<int, Func<object[], object>> innerCache))
-        //    {
-        //        // inner cacheの中にコンストラクタのキャッシュ情報があればそれを利用する
-        //        if (innerCache.TryGetValue(key, out Func<object[], object> ctorCache))
-        //            return ctorCache(@params);
-        //    }
-        //    else
-        //    {
-        //        // _constructorCacheの中にinner cacheが存在しないときのみ、inner cacheを追加する
-        //        innerCache = new ConcurrentDictionary<int, Func<object[], object>>();
-        //        _restrictedConstructorCache2.TryAdd(type, innerCache);
-        //    }
-
-        //    var types = @params == null ? Type.EmptyTypes : @params.Select(p => p.GetType()).ToArray();
-        //    var ctor = BuildConstructor(type, types, @params);
-        //    return innerCache.GetOrAdd(key, ctor)(@params);
-        //}
-        //private static readonly Hashtable _restrictedConstructorCache2 = new Hashtable();
     }
 }
 #endif
