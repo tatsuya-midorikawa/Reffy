@@ -27,20 +27,20 @@ namespace Net50Console
         private const int length = 1_000;
 
         [Benchmark]
+        public void CallConstructor()
+        {
+            for (int i = 0; i < length; i++)
+            {
+                var foo = new Foo(i, (double)i);
+            }
+        }
+
+        [Benchmark]
         public void UseActivator()
         {
             for (int i = 0; i < length; i++)
             {
                 var foo = Activator.CreateInstance(typeof(Foo), new object[] { i, (double)i });
-            }
-        }
-
-        [Benchmark]
-        public void UseConstructorNoCache()
-        {
-            for (int i = 0; i < length; i++)
-            {
-                var foo = typeof(Foo).ConstructorNoCache(i, (double)i);
             }
         }
 
