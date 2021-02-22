@@ -7,6 +7,9 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Reflection;
 using Microsoft.FSharp.Reflection;
+#if NET5_0 || NETCOREAPP3_1
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace Reffy.Expressions
 {
@@ -43,83 +46,76 @@ namespace Reffy.Expressions
         /// <param name="type"></param>
         /// <param name="params"></param>
         /// <returns></returns>
+#if NET5_0 || NETCOREAPP3_1
+        public static object Constructor([DisallowNull] this Type type, [AllowNull] params object[] @params)
+#else
         public static object Constructor(this Type type, params object[] @params)
+#endif
         {
             @params = @params == null ? Type.EmptyTypes : @params;
-            var types = new Type[@params.Length];
-            for (int i = 0; i < types.Length; i++)
-                types[i] = @params[i].GetType();
+            var types = new RuntimeTypeHandle[@params.Length + 1];
+            types[0] = type.TypeHandle;
+            for (int i = 0; i < @params.Length; i++)
+                types[i+1] = Type.GetTypeHandle(@params[i]);
 
-            var key = string.Concat(types as object[]);
-            if (_constructorCache.TryGetValue(type, types, out Func<object[], object> ctor))
+            if (_constructorCache.TryGetValue(types, out Func<object[], object> ctor))
                 return ctor(@params);
-
-            ctor = BuildConstructor(type, types, @params);
-            return _constructorCache.GetOrAdd(type, types, ctor)(@params);
+            // slow path.
+            var types2 = new Type[@params.Length];
+            for (int i = 0; i < @params.Length; i++)
+                types2[i] = Type.GetTypeFromHandle(types[i+1]);
+            ctor = BuildConstructor(type, types2, @params);
+            return _constructorCache.TryAdd(types, ctor)(@params);
         }
         private static readonly Cache _constructorCache = new Cache();
 
         private class Cache
         {
-            private ConcurrentDictionary<Type, List<Data>> _cache
-                = new ConcurrentDictionary<Type, List<Data>>();
+            private ConcurrentDictionary<RuntimeTypeHandle[], Func<object[], object>> _cache
+                = new ConcurrentDictionary<RuntimeTypeHandle[], Func<object[], object>>(new TypeArrayEquallity());
 
-            public bool TryGetValue(Type type, Type[] types, out Func<object[], object> contructor)
+#if NET5_0 || NETCOREAPP3_1
+            public bool TryGetValue([DisallowNull] RuntimeTypeHandle[] types, out Func<object[], object> constructor)
+#else
+            public bool TryGetValue(RuntimeTypeHandle[] types, out Func<object[], object> constructor) 
+#endif
+                => _cache.TryGetValue(types, out constructor);
+
+#if NET5_0 || NETCOREAPP3_1
+            public Func<object[], object> TryAdd([DisallowNull] RuntimeTypeHandle[] types, [DisallowNull] Func<object[], object> constructor)
+#else
+            public Func<object[], object> TryAdd(RuntimeTypeHandle[] types, Func<object[], object> constructor)
+#endif
             {
-                contructor = null;
-                if (_cache.TryGetValue(type, out List<Data> cache))
-                {
-                    foreach (var ts in cache)
-                    {
-                        if (ts.ArgTypes.Length != types.Length)
-                            continue;
-
-                        var same = true;
-                        for (int i = 0; i < ts.ArgTypes.Length; i++)
-                        {
-                            if (ts.ArgTypes[i] != types[i])
-                            {
-                                same = false;
-                                break;
-                            }
-                        }
-
-                        if (!same)
-                            continue;
-
-                        contructor = ts.Constructor;
-                        return same;
-                    }
-                }
-                return false;
+                _cache.TryAdd(types, constructor);
+                return constructor;
             }
 
-            public Func<object[], object> GetOrAdd(Type type, Type[] types, Func<object[], object> contructor)
+            private class TypeArrayEquallity : IEqualityComparer<RuntimeTypeHandle[]>
             {
-                if (!_cache.TryGetValue(type, out List<Data> cache))
+#if NET5_0 || NETCOREAPP3_1
+                public bool Equals([AllowNull] RuntimeTypeHandle[] x, [AllowNull] RuntimeTypeHandle[] y)
+#else
+                public bool Equals(RuntimeTypeHandle[] x, RuntimeTypeHandle[] y)
+#endif
                 {
-                    cache = new List<Data>();
-                    _cache.TryAdd(type, cache);
+                    if (x.Length != y.Length) return false;
+                    for (int i = 0; i < x.Length; ++i)
+                        if (x[i].Value != y[i].Value) return false;
+                    return true;
                 }
 
-                if (TryGetValue(type, types, out Func<object[], object>  ctor))
+#if NET5_0 || NETCOREAPP3_1
+                public int GetHashCode([DisallowNull] RuntimeTypeHandle[] obj)
+#else
+                public int GetHashCode(RuntimeTypeHandle[] obj)
+#endif
                 {
-                    return ctor;
-                }
-
-                cache.Add(new Data(types, contructor));
-                return contructor;
-            }
-
-            public class Data
-            {
-                public Type[] ArgTypes { get; }
-                public Func<object[], object> Constructor { get; }
-
-                public Data(Type[] argTypes, Func<object[], object> constructor)
-                {
-                    ArgTypes = argTypes;
-                    Constructor = constructor;
+                    // if(obj.Length == 0) return 0; // 今回の場合は不要
+                    int returnValue = obj[0].GetHashCode();
+                    for (int i = 1; i < obj.Length; ++i)
+                        returnValue ^= obj[i].GetHashCode();
+                    return returnValue;
                 }
             }
         }
