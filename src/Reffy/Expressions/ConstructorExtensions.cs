@@ -119,42 +119,5 @@ namespace Reffy.Expressions
                 }
             }
         }
-
-        /// <summary>
-        /// 限定的なコンストラクタ呼び出し.
-        /// 引数の個数でコンストラクタ情報をキャッシュするので、初回に呼び出したコンストラクタと同一個数の引数をもつ別のコンストラクタを呼び出すとエラーとなります.
-        /// その代わり<see cref="Constructor(Type, object[])"/>に比べて高速に動作します。
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="params"></param>
-        /// <returns></returns>
-        public static object RestrictedConstructor(this Type type, params object[] @params)
-        {
-            var key = @params?.Length ?? 0;
-            if (_restrictedConstructorCache.TryGetValue(type, out List<KeyValuePair<int, Func<object[], object>>> innerCache))
-            {
-                // inner cacheの中にコンストラクタのキャッシュ情報があればそれを利用する
-                foreach (var cache in innerCache)
-                {
-                    if (cache.Key == key)
-                        return cache.Value(@params);
-                }
-            }
-            else
-            {
-                // _constructorCacheの中にinner cacheが存在しないときのみ、inner cacheを追加する
-                innerCache = new List<KeyValuePair<int, Func<object[], object>>>();
-                _restrictedConstructorCache.TryAdd(type, innerCache);
-            }
-
-            var types = @params == null ? Type.EmptyTypes : @params.Select(p => p.GetType()).ToArray();
-            var ctor = BuildConstructor(type, types, @params);
-            innerCache.Add(new KeyValuePair<int, Func<object[], object>>(key, ctor));
-            return ctor(@params);
-        }
-        private static readonly ConcurrentDictionary<Type, List<KeyValuePair<int, Func<object[], object>>>> _restrictedConstructorCache
-            = new ConcurrentDictionary<Type, List<KeyValuePair<int, Func<object[], object>>>>();
-
-    }
 }
 #endif
