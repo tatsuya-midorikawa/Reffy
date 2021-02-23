@@ -56,14 +56,14 @@ namespace Reffy.Expressions
             var types = new RuntimeTypeHandle[@params.Length + 1];
             types[0] = type.TypeHandle;
             for (int i = 0; i < @params.Length; i++)
-                types[i+1] = Type.GetTypeHandle(@params[i]);
+                types[i + 1] = Type.GetTypeHandle(@params[i]);
 
             if (_constructorCache.TryGetValue(types, out Func<object[], object> ctor))
                 return ctor(@params);
             // slow path.
             var types2 = new Type[@params.Length];
             for (int i = 0; i < @params.Length; i++)
-                types2[i] = Type.GetTypeFromHandle(types[i+1]);
+                types2[i] = Type.GetTypeFromHandle(types[i + 1]);
             ctor = BuildConstructor(type, types2, @params);
             return _constructorCache.TryAdd(types, ctor)(@params);
         }
@@ -77,7 +77,7 @@ namespace Reffy.Expressions
 #if NET5_0 || NETCOREAPP3_1
             public bool TryGetValue([DisallowNull] RuntimeTypeHandle[] types, out Func<object[], object> constructor)
 #else
-            public bool TryGetValue(RuntimeTypeHandle[] types, out Func<object[], object> constructor) 
+            public bool TryGetValue(RuntimeTypeHandle[] types, out Func<object[], object> constructor)
 #endif
                 => _cache.TryGetValue(types, out constructor);
 
@@ -119,5 +119,6 @@ namespace Reffy.Expressions
                 }
             }
         }
+    }
 }
 #endif
