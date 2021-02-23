@@ -52,16 +52,6 @@ namespace Net50Console
                 var foo = typeof(Foo).Constructor(i, (double)i);
             }
         }
-
-        [Benchmark]
-        public void UseRestrictedConstructor()
-        {
-            for (int i = 0; i < length; i++)
-            {
-                var foo = typeof(Foo).RestrictedConstructor(i, (double)i);
-            }
-        }
-
     }
 
     class Program
