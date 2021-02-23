@@ -5,7 +5,13 @@ using Reffy.Expressions;
 
 namespace Net50Console
 {
-    public class Foo
+    public interface IFoo
+    {
+        int MyProperty { get; set; }
+        double MyProperty2 { get; set; }
+    }
+
+    public class Foo : IFoo
     {
         public int MyProperty { get; set; }
         public double MyProperty2 { get; set; }
@@ -50,6 +56,15 @@ namespace Net50Console
             for (int i = 0; i < length; i++)
             {
                 var foo = typeof(Foo).Constructor(i, (double)i);
+            }
+        }
+
+        [Benchmark]
+        public void UseGenericConstructor()
+        {
+            for (int i = 0; i < length; i++)
+            {
+                var foo = typeof(Foo).Constructor<IFoo>(i, (double)i);
             }
         }
     }

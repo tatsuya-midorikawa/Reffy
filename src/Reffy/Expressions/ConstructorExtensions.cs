@@ -40,8 +40,23 @@ namespace Reffy.Expressions
 
         /// <summary>
         /// コンストラクタ呼び出し.
-        /// 呼び出し型情報と引数の型情報でコンストラクタをキャッシュします. 
-        /// <see cref="RestrictedConstructor(Type, object[])"/>よりも低速ですが、初回に呼び出したコンストラクタと同一個数の引数をもつ別のコンストラクタを呼び出しても正常に動作します.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="params"></param>
+        /// <returns></returns>
+#if NET5_0 || NETCOREAPP3_1
+        public static object Constructor<T>([DisallowNull] this Type type, [AllowNull] params object[] @params)
+#else
+        public static T Constructor<T>(this Type type, params object[] @params)
+#endif
+        {
+            return Constructor(type, @params) is T instance
+                ? instance
+                : throw new Exception($"Created instance type is not {typeof(T).FullName}.");
+        }
+
+        /// <summary>
+        /// コンストラクタ呼び出し.
         /// </summary>
         /// <param name="type"></param>
         /// <param name="params"></param>
