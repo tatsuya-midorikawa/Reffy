@@ -1,5 +1,4 @@
-﻿//#if NET40 || NET45 || NET46 || NET472 || NET48 || NETCOREAPP3_1 || NET5_0
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
@@ -344,4 +343,3 @@ namespace Reffy
         }
     }
 }
-//#endif
