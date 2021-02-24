@@ -126,7 +126,6 @@ namespace Reffy.Expressions
                 public int GetHashCode(RuntimeTypeHandle[] obj)
 #endif
                 {
-                    // if(obj.Length == 0) return 0; // 今回の場合は不要
                     int returnValue = obj[0].GetHashCode();
                     for (int i = 1; i < obj.Length; ++i)
                         returnValue ^= obj[i].GetHashCode();
