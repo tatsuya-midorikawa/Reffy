@@ -5,49 +5,36 @@ using System.Reflection;
 using Microsoft.FSharp.Core;
 using Microsoft.FSharp.Reflection;
 using Mono.Reflection;
+#if NET40 || NET45 || NET46 || NET472 || NET48 || NETCOREAPP3_1 || NET5_0
+using Reffy.Expressions;
+#endif
 
 namespace Reffy
 {
     public static class TypeExtensions
     {
         /// <summary>
-        /// 
+        /// F#のOption型かの判定
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="propertyName"></param>
-        /// <param name="flags"></param>
-        /// <param name="useCache"></param>
-        /// <returns></returns>
-        public static FieldInfo GetBackingField(this Type type, string propertyName, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
+        /// <param name="type">判定対象の型情報</param>
+        /// <returns>F# Option型の場合 true</returns>
+        public static bool IsFsharpOption(this Type type)
         {
-            return type
-                .GetProperty(propertyName, flags)
-                .GetBackingField(useCache);
+            return type.IsGenericType
+                && !type.IsGenericTypeDefinition
+                && !type.IsGenericParameter
+                && typeof(FSharpOption<>) == type.GetGenericTypeDefinition();
         }
 
         /// <summary>
-        /// Type情報からBacking field一覧を取得する.
+        /// F#の判別共用体型かの判定
         /// </summary>
-        /// <param name="type">Backing fieldsを取得したいType情報</param>
-        /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
-        /// <returns>Backing fields情報配列</returns>
-        public static FieldInfo[] GetBackingFields(this Type type, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
+        /// <param name="type">判定対象の型情報</param>
+        /// <returns>F# 判別共用体の場合 true</returns>
+        public static bool IsFsharpDiscriminatedUnions(this Type type)
         {
-            if (useCache && _backingfieldsCache.TryGetValue(type.FullName, out FieldInfo[] fields))
-                return fields;
-
-            fields = type
-                .GetProperties(flags)
-                .Select(property => property.GetBackingField())
-                .ToArray();
-
-            if (useCache)
-                _backingfieldsCache.Add(type.FullName, fields);
-
-            return fields;
+            return !type.IsFsharpOption() && FSharpType.IsUnion(type, FSharpOption<BindingFlags>.None);
         }
-        private static Dictionary<string, FieldInfo[]> _backingfieldsCache
-            = new Dictionary<string, FieldInfo[]>();
 
         /// <summary>
         /// Type情報からデフォルトのインスタンスを生成する.
@@ -58,19 +45,117 @@ namespace Reffy
         {
             var none = FSharpOption<BindingFlags>.None;
 
-            // 文字列型
+            if (type == typeof(int))
+                return default(int);
+            if (type == typeof(uint))
+                return default(uint);
+            if (type == typeof(short))
+                return default(short);
+            if (type == typeof(ushort))
+                return default(ushort);
+            if (type == typeof(long))
+                return default(long);
+            if (type == typeof(ulong))
+                return default(ulong);
+            if (type == typeof(byte))
+                return default(byte);
+            if (type == typeof(sbyte))
+                return default(sbyte);
+            if (type == typeof(bool))
+                return default(bool);
+            if (type == typeof(float))
+                return default(float);
+            if (type == typeof(double))
+                return default(double);
+            if (type == typeof(decimal))
+                return default(decimal);
+            if (type == typeof(char))
+                return default(char);
             if (type == typeof(string))
-            {
-                return null;
-            }
+                return default(string);
+            if (type == typeof(Guid))
+                return default(Guid);
+            if (type == typeof(DateTime))
+                return default(DateTime);
+            if (type == typeof(DateTimeOffset))
+                return default(DateTimeOffset);
+            if (type == typeof(byte[]))
+                return default(byte[]);
+
+            if (type == typeof(int?))
+                return default(int?);
+            if (type == typeof(uint?))
+                return default(uint?);
+            if (type == typeof(short?))
+                return default(short?);
+            if (type == typeof(ushort?))
+                return default(ushort?);
+            if (type == typeof(long?))
+                return default(long?);
+            if (type == typeof(ulong?))
+                return default(ulong?);
+            if (type == typeof(byte?))
+                return default(byte?);
+            if (type == typeof(sbyte?))
+                return default(sbyte?);
+            if (type == typeof(bool?))
+                return default(bool?);
+            if (type == typeof(float?))
+                return default(float?);
+            if (type == typeof(double?))
+                return default(double?);
+            if (type == typeof(decimal?))
+                return default(decimal?);
+            if (type == typeof(char?))
+                return default(char?);
+            if (type == typeof(Guid?))
+                return default(Guid?);
+            if (type == typeof(DateTime?))
+                return default(DateTime?);
+            if (type == typeof(DateTimeOffset?))
+                return default(DateTimeOffset?);
+
+            if (type == typeof(FSharpOption<int>))
+                return FSharpOption<int>.None;
+            if (type == typeof(FSharpOption<uint>))
+                return FSharpOption<uint>.None;
+            if (type == typeof(FSharpOption<short>))
+                return FSharpOption<short>.None;
+            if (type == typeof(FSharpOption<ushort>))
+                return FSharpOption<ushort>.None;
+            if (type == typeof(FSharpOption<long>))
+                return FSharpOption<long>.None;
+            if (type == typeof(FSharpOption<ulong>))
+                return FSharpOption<ulong>.None;
+            if (type == typeof(FSharpOption<byte>))
+                return FSharpOption<byte>.None;
+            if (type == typeof(FSharpOption<sbyte>))
+                return FSharpOption<sbyte>.None;
+            if (type == typeof(FSharpOption<bool>))
+                return FSharpOption<bool>.None;
+            if (type == typeof(FSharpOption<float>))
+                return FSharpOption<float>.None;
+            if (type == typeof(FSharpOption<double>))
+                return FSharpOption<double>.None;
+            if (type == typeof(FSharpOption<decimal>))
+                return FSharpOption<decimal>.None;
+            if (type == typeof(FSharpOption<char>))
+                return FSharpOption<char>.None;
+            if (type == typeof(FSharpOption<string>))
+                return FSharpOption<string>.None;
+            if (type == typeof(FSharpOption<Guid>))
+                return FSharpOption<Guid>.None;
+            if (type == typeof(FSharpOption<DateTime>))
+                return FSharpOption<DateTime>.None;
+            if (type == typeof(FSharpOption<DateTimeOffset>))
+                return FSharpOption<DateTimeOffset>.None;
+            if (type == typeof(FSharpOption<byte[]>))
+                return FSharpOption<byte[]>.None;
 
             // Option型(F#)
             //   - FSharpType.IsUnion()でも引っ掛かってしまうので、
             //     それよりも前に判定をする必要がある.
-            if (type.IsGenericType
-                && !type.IsGenericTypeDefinition
-                && !type.IsGenericParameter
-                && typeof(FSharpOption<>) == type.GetGenericTypeDefinition())
+            if (type.IsFsharpOption())
             {
                 return type
                     .GetProperty("None", BindingFlags.Public | BindingFlags.Static)
@@ -79,7 +164,7 @@ namespace Reffy
             }
 
             // 判別共用体(F#)
-            if (FSharpType.IsUnion(type, none))
+            if (type.IsFsharpDiscriminatedUnions())
             {
                 var ctor = FSharpType.GetUnionCases(type, none).FirstOrDefault();
                 if (ctor == null)
@@ -121,7 +206,11 @@ namespace Reffy
                     for (int i = 0; i < ps.Length; i++)
                         qs[i] = ps[i].ParameterType.MakeDefault();
 
+#if NET40 || NET45 || NET46 || NET472 || NET48 || NETCOREAPP3_1 || NET5_0
+                    return type.Constructor(qs);
+#else
                     return Activator.CreateInstance(type, qs);
+#endif
                 }
             }
 
