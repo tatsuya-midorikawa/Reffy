@@ -11,45 +11,6 @@ namespace Reffy
     public static class TypeExtensions
     {
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="propertyName"></param>
-        /// <param name="flags"></param>
-        /// <param name="useCache"></param>
-        /// <returns></returns>
-        public static FieldInfo GetBackingField(this Type type, string propertyName, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
-        {
-            return type
-                .GetProperty(propertyName, flags)
-                .GetBackingField(useCache);
-        }
-
-        /// <summary>
-        /// Type情報からBacking field一覧を取得する.
-        /// </summary>
-        /// <param name="type">Backing fieldsを取得したいType情報</param>
-        /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
-        /// <returns>Backing fields情報配列</returns>
-        public static FieldInfo[] GetBackingFields(this Type type, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
-        {
-            if (useCache && _backingfieldsCache.TryGetValue(type.FullName, out FieldInfo[] fields))
-                return fields;
-
-            fields = type
-                .GetProperties(flags)
-                .Select(property => property.GetBackingField())
-                .ToArray();
-
-            if (useCache)
-                _backingfieldsCache.Add(type.FullName, fields);
-
-            return fields;
-        }
-        private static Dictionary<string, FieldInfo[]> _backingfieldsCache
-            = new Dictionary<string, FieldInfo[]>();
-
-        /// <summary>
         /// Type情報からデフォルトのインスタンスを生成する.
         /// </summary>
         /// <param name="type">デフォルトインスタンスを生成したいType情報</param>
