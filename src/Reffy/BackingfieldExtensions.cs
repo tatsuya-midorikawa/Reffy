@@ -7,10 +7,10 @@ using Mono.Reflection;
 
 namespace Reffy
 {
-    public static class BackingfieldExtensions
+    public static class BackingFieldExtensions
     {
         /// <summary>
-        /// プロパティ情報からBackingfieldを取得する.
+        /// プロパティ情報からBackingFieldを取得する.
         /// </summary>
         /// <param name="property">Backing fieldsを取得したいプロパティ情報</param>
         /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
@@ -32,7 +32,7 @@ namespace Reffy
             = new Dictionary<PropertyInfo, FieldInfo>();
 
         /// <summary>
-        /// 型情報と取得対象プロパティ名からBackingfieldを取得する.
+        /// 型情報と取得対象プロパティ名からBackingFieldを取得する.
         /// </summary>
         /// <param name="type"></param>
         /// <param name="propertyName"></param>
@@ -47,9 +47,9 @@ namespace Reffy
         }
 
         /// <summary>
-        /// Type情報からBackingfield一覧を取得する.
+        /// Type情報からBackingField一覧を取得する.
         /// </summary>
-        /// <param name="type">Backingfieldsを取得したいType情報</param>
+        /// <param name="type">BackingFieldsを取得したいType情報</param>
         /// <param name="useCache">キャッシュ機能を利用する場合はtrueを指定する. default: true</param>
         /// <returns>Backing fields情報配列</returns>
         public static FieldInfo[] GetBackingFields(this Type type, BindingFlags flags = (BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ^ BindingFlags.DeclaredOnly, bool useCache = true)
